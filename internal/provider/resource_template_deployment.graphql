@@ -1,0 +1,42 @@
+query getTemplate($code: String!) {
+  template(code: $code) {
+    id
+    name
+    serializedConfig
+  }
+}
+
+query getProjectServices($projectId: String!) {
+  project(id: $projectId) {
+    services {
+      edges {
+        node {
+          id
+          name
+          templateServiceId
+        }
+      }
+    }
+  }
+}
+
+# @genqlient(for: "TemplateDeployV2Input.environmentId", omitempty: true, pointer: true)
+# @genqlient(for: "TemplateDeployV2Input.projectId", omitempty: true, pointer: true)
+# @genqlient(for: "TemplateDeployV2Input.workspaceId", omitempty: true, pointer: true)
+# @genqlient(for: "TemplateDeployV2Input.existingRootServiceId", omitempty: true, pointer: true)
+# @genqlient(for: "TemplateDeployV2Input.stageOnly", omitempty: true, pointer: true)
+mutation deployTemplate(
+  $input: TemplateDeployV2Input!
+) {
+  templateDeployV2(input: $input) {
+    projectId
+    workflowId
+  }
+}
+
+query getWorkflowStatus($workflowId: String!) {
+  workflowStatus(workflowId: $workflowId) {
+    status
+    error
+  }
+}

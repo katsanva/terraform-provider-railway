@@ -15,3 +15,5 @@ bindings:
     type: map[string]interface{}
   EnvironmentConfig:
     type: map[string]interface{}
+  SerializedTemplateConfig:
+    type: map[string]interface{}

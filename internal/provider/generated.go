@@ -717,6 +717,42 @@ func (v *TCPProxyCreateInput) GetEnvironmentId() string { return v.EnvironmentId
 // GetServiceId returns TCPProxyCreateInput.ServiceId, and is useful for accessing the field via an interface.
 func (v *TCPProxyCreateInput) GetServiceId() string { return v.ServiceId }
 
+type TemplateDeployV2Input struct {
+	EnvironmentId *string `json:"environmentId,omitempty"`
+	// Use an existing service as the cluster root instead of creating a new one.
+	// Used for HA cluster conversion where an existing postgres becomes the primary.
+	ExistingRootServiceId *string                `json:"existingRootServiceId,omitempty"`
+	ProjectId             *string                `json:"projectId,omitempty"`
+	SerializedConfig      map[string]interface{} `json:"serializedConfig"`
+	// If true, create resources and patch but don't deploy. Returns patchId for later commit.
+	StageOnly   *bool   `json:"stageOnly,omitempty"`
+	TemplateId  string  `json:"templateId"`
+	WorkspaceId *string `json:"workspaceId,omitempty"`
+}
+
+// GetEnvironmentId returns TemplateDeployV2Input.EnvironmentId, and is useful for accessing the field via an interface.
+func (v *TemplateDeployV2Input) GetEnvironmentId() *string { return v.EnvironmentId }
+
+// GetExistingRootServiceId returns TemplateDeployV2Input.ExistingRootServiceId, and is useful for accessing the field via an interface.
+func (v *TemplateDeployV2Input) GetExistingRootServiceId() *string { return v.ExistingRootServiceId }
+
+// GetProjectId returns TemplateDeployV2Input.ProjectId, and is useful for accessing the field via an interface.
+func (v *TemplateDeployV2Input) GetProjectId() *string { return v.ProjectId }
+
+// GetSerializedConfig returns TemplateDeployV2Input.SerializedConfig, and is useful for accessing the field via an interface.
+func (v *TemplateDeployV2Input) GetSerializedConfig() map[string]interface{} {
+	return v.SerializedConfig
+}
+
+// GetStageOnly returns TemplateDeployV2Input.StageOnly, and is useful for accessing the field via an interface.
+func (v *TemplateDeployV2Input) GetStageOnly() *bool { return v.StageOnly }
+
+// GetTemplateId returns TemplateDeployV2Input.TemplateId, and is useful for accessing the field via an interface.
+func (v *TemplateDeployV2Input) GetTemplateId() string { return v.TemplateId }
+
+// GetWorkspaceId returns TemplateDeployV2Input.WorkspaceId, and is useful for accessing the field via an interface.
+func (v *TemplateDeployV2Input) GetWorkspaceId() *string { return v.WorkspaceId }
+
 type VariableCollectionUpsertInput struct {
 	EnvironmentId string `json:"environmentId"`
 	ProjectId     string `json:"projectId"`
@@ -933,6 +969,15 @@ func (v *VolumeVolumeInstancesVolumeVolumeInstancesConnectionEdgesVolumeVolumeIn
 	return v.SizeMB
 }
 
+type WorkflowStatus string
+
+const (
+	WorkflowStatusComplete WorkflowStatus = "Complete"
+	WorkflowStatusError    WorkflowStatus = "Error"
+	WorkflowStatusNotfound WorkflowStatus = "NotFound"
+	WorkflowStatusRunning  WorkflowStatus = "Running"
+)
+
 // __commitEnvironmentPatchInput is used internally by genqlient
 type __commitEnvironmentPatchInput struct {
 	EnvironmentId string                 `json:"environmentId"`
@@ -1089,6 +1134,14 @@ type __deleteVolumeInput struct {
 // GetId returns __deleteVolumeInput.Id, and is useful for accessing the field via an interface.
 func (v *__deleteVolumeInput) GetId() string { return v.Id }
 
+// __deployTemplateInput is used internally by genqlient
+type __deployTemplateInput struct {
+	Input TemplateDeployV2Input `json:"input"`
+}
+
+// GetInput returns __deployTemplateInput.Input, and is useful for accessing the field via an interface.
+func (v *__deployTemplateInput) GetInput() TemplateDeployV2Input { return v.Input }
+
 // __disconnectServiceInput is used internally by genqlient
 type __disconnectServiceInput struct {
 	Id string `json:"id"`
@@ -1132,6 +1185,14 @@ type __getProjectInput struct {
 
 // GetId returns __getProjectInput.Id, and is useful for accessing the field via an interface.
 func (v *__getProjectInput) GetId() string { return v.Id }
+
+// __getProjectServicesInput is used internally by genqlient
+type __getProjectServicesInput struct {
+	ProjectId string `json:"projectId"`
+}
+
+// GetProjectId returns __getProjectServicesInput.ProjectId, and is useful for accessing the field via an interface.
+func (v *__getProjectServicesInput) GetProjectId() string { return v.ProjectId }
 
 // __getServiceInput is used internally by genqlient
 type __getServiceInput struct {
@@ -1185,6 +1246,14 @@ func (v *__getTcpProxyInput) GetEnvironmentId() string { return v.EnvironmentId 
 // GetServiceId returns __getTcpProxyInput.ServiceId, and is useful for accessing the field via an interface.
 func (v *__getTcpProxyInput) GetServiceId() string { return v.ServiceId }
 
+// __getTemplateInput is used internally by genqlient
+type __getTemplateInput struct {
+	Code string `json:"code"`
+}
+
+// GetCode returns __getTemplateInput.Code, and is useful for accessing the field via an interface.
+func (v *__getTemplateInput) GetCode() string { return v.Code }
+
 // __getVariablesInput is used internally by genqlient
 type __getVariablesInput struct {
 	ProjectId     string `json:"projectId"`
@@ -1208,6 +1277,14 @@ type __getVolumeInstancesInput struct {
 
 // GetId returns __getVolumeInstancesInput.Id, and is useful for accessing the field via an interface.
 func (v *__getVolumeInstancesInput) GetId() string { return v.Id }
+
+// __getWorkflowStatusInput is used internally by genqlient
+type __getWorkflowStatusInput struct {
+	WorkflowId string `json:"workflowId"`
+}
+
+// GetWorkflowId returns __getWorkflowStatusInput.WorkflowId, and is useful for accessing the field via an interface.
+func (v *__getWorkflowStatusInput) GetWorkflowId() string { return v.WorkflowId }
 
 // __listCustomDomainsInput is used internally by genqlient
 type __listCustomDomainsInput struct {
@@ -2243,6 +2320,33 @@ type deleteVolumeResponse struct {
 // GetVolumeDelete returns deleteVolumeResponse.VolumeDelete, and is useful for accessing the field via an interface.
 func (v *deleteVolumeResponse) GetVolumeDelete() bool { return v.VolumeDelete }
 
+// deployTemplateResponse is returned by deployTemplate on success.
+type deployTemplateResponse struct {
+	// Deploys a template using the serialized template config
+	TemplateDeployV2 deployTemplateTemplateDeployV2TemplateDeployPayload `json:"templateDeployV2"`
+}
+
+// GetTemplateDeployV2 returns deployTemplateResponse.TemplateDeployV2, and is useful for accessing the field via an interface.
+func (v *deployTemplateResponse) GetTemplateDeployV2() deployTemplateTemplateDeployV2TemplateDeployPayload {
+	return v.TemplateDeployV2
+}
+
+// deployTemplateTemplateDeployV2TemplateDeployPayload includes the requested fields of the GraphQL type TemplateDeployPayload.
+type deployTemplateTemplateDeployV2TemplateDeployPayload struct {
+	ProjectId  string `json:"projectId"`
+	WorkflowId string `json:"workflowId"`
+}
+
+// GetProjectId returns deployTemplateTemplateDeployV2TemplateDeployPayload.ProjectId, and is useful for accessing the field via an interface.
+func (v *deployTemplateTemplateDeployV2TemplateDeployPayload) GetProjectId() string {
+	return v.ProjectId
+}
+
+// GetWorkflowId returns deployTemplateTemplateDeployV2TemplateDeployPayload.WorkflowId, and is useful for accessing the field via an interface.
+func (v *deployTemplateTemplateDeployV2TemplateDeployPayload) GetWorkflowId() string {
+	return v.WorkflowId
+}
+
 // disconnectServiceResponse is returned by disconnectService on success.
 type disconnectServiceResponse struct {
 	// Disconnect a service from a repo
@@ -2665,6 +2769,67 @@ type getProjectResponse struct {
 // GetProject returns getProjectResponse.Project, and is useful for accessing the field via an interface.
 func (v *getProjectResponse) GetProject() getProjectProject { return v.Project }
 
+// getProjectServicesProject includes the requested fields of the GraphQL type Project.
+type getProjectServicesProject struct {
+	Services getProjectServicesProjectServicesProjectServicesConnection `json:"services"`
+}
+
+// GetServices returns getProjectServicesProject.Services, and is useful for accessing the field via an interface.
+func (v *getProjectServicesProject) GetServices() getProjectServicesProjectServicesProjectServicesConnection {
+	return v.Services
+}
+
+// getProjectServicesProjectServicesProjectServicesConnection includes the requested fields of the GraphQL type ProjectServicesConnection.
+type getProjectServicesProjectServicesProjectServicesConnection struct {
+	Edges []getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdge `json:"edges"`
+}
+
+// GetEdges returns getProjectServicesProjectServicesProjectServicesConnection.Edges, and is useful for accessing the field via an interface.
+func (v *getProjectServicesProjectServicesProjectServicesConnection) GetEdges() []getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdge {
+	return v.Edges
+}
+
+// getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdge includes the requested fields of the GraphQL type ProjectServicesConnectionEdge.
+type getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdge struct {
+	Node getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService `json:"node"`
+}
+
+// GetNode returns getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdge.Node, and is useful for accessing the field via an interface.
+func (v *getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdge) GetNode() getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService {
+	return v.Node
+}
+
+// getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService includes the requested fields of the GraphQL type Service.
+type getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService struct {
+	Id                string `json:"id"`
+	Name              string `json:"name"`
+	TemplateServiceId string `json:"templateServiceId"`
+}
+
+// GetId returns getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService.Id, and is useful for accessing the field via an interface.
+func (v *getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService) GetId() string {
+	return v.Id
+}
+
+// GetName returns getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService.Name, and is useful for accessing the field via an interface.
+func (v *getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService) GetName() string {
+	return v.Name
+}
+
+// GetTemplateServiceId returns getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService.TemplateServiceId, and is useful for accessing the field via an interface.
+func (v *getProjectServicesProjectServicesProjectServicesConnectionEdgesProjectServicesConnectionEdgeNodeService) GetTemplateServiceId() string {
+	return v.TemplateServiceId
+}
+
+// getProjectServicesResponse is returned by getProjectServices on success.
+type getProjectServicesResponse struct {
+	// Get a project by ID
+	Project getProjectServicesProject `json:"project"`
+}
+
+// GetProject returns getProjectServicesResponse.Project, and is useful for accessing the field via an interface.
+func (v *getProjectServicesResponse) GetProject() getProjectServicesProject { return v.Project }
+
 // getServiceInstanceResponse is returned by getServiceInstance on success.
 type getServiceInstanceResponse struct {
 	// Get a service instance belonging to a service and environment
@@ -2957,6 +3122,31 @@ func (v *getTcpProxyTcpProxiesTCPProxy) __premarshalJSON() (*__premarshalgetTcpP
 	return &retval, nil
 }
 
+// getTemplateResponse is returned by getTemplate on success.
+type getTemplateResponse struct {
+	// Get a template by code or ID or GitHub owner and repo.
+	Template getTemplateTemplate `json:"template"`
+}
+
+// GetTemplate returns getTemplateResponse.Template, and is useful for accessing the field via an interface.
+func (v *getTemplateResponse) GetTemplate() getTemplateTemplate { return v.Template }
+
+// getTemplateTemplate includes the requested fields of the GraphQL type Template.
+type getTemplateTemplate struct {
+	Id               string                 `json:"id"`
+	Name             string                 `json:"name"`
+	SerializedConfig map[string]interface{} `json:"serializedConfig"`
+}
+
+// GetId returns getTemplateTemplate.Id, and is useful for accessing the field via an interface.
+func (v *getTemplateTemplate) GetId() string { return v.Id }
+
+// GetName returns getTemplateTemplate.Name, and is useful for accessing the field via an interface.
+func (v *getTemplateTemplate) GetName() string { return v.Name }
+
+// GetSerializedConfig returns getTemplateTemplate.SerializedConfig, and is useful for accessing the field via an interface.
+func (v *getTemplateTemplate) GetSerializedConfig() map[string]interface{} { return v.SerializedConfig }
+
 // getVariablesResponse is returned by getVariables on success.
 type getVariablesResponse struct {
 	// All variables by pluginId or serviceId. If neither are provided, all shared variables are returned.
@@ -3074,6 +3264,29 @@ type getVolumeInstancesResponse struct {
 
 // GetProject returns getVolumeInstancesResponse.Project, and is useful for accessing the field via an interface.
 func (v *getVolumeInstancesResponse) GetProject() getVolumeInstancesProject { return v.Project }
+
+// getWorkflowStatusResponse is returned by getWorkflowStatus on success.
+type getWorkflowStatusResponse struct {
+	// Gets the status of a workflow
+	WorkflowStatus getWorkflowStatusWorkflowStatusWorkflowResult `json:"workflowStatus"`
+}
+
+// GetWorkflowStatus returns getWorkflowStatusResponse.WorkflowStatus, and is useful for accessing the field via an interface.
+func (v *getWorkflowStatusResponse) GetWorkflowStatus() getWorkflowStatusWorkflowStatusWorkflowResult {
+	return v.WorkflowStatus
+}
+
+// getWorkflowStatusWorkflowStatusWorkflowResult includes the requested fields of the GraphQL type WorkflowResult.
+type getWorkflowStatusWorkflowStatusWorkflowResult struct {
+	Status WorkflowStatus `json:"status"`
+	Error  string         `json:"error"`
+}
+
+// GetStatus returns getWorkflowStatusWorkflowStatusWorkflowResult.Status, and is useful for accessing the field via an interface.
+func (v *getWorkflowStatusWorkflowStatusWorkflowResult) GetStatus() WorkflowStatus { return v.Status }
+
+// GetError returns getWorkflowStatusWorkflowStatusWorkflowResult.Error, and is useful for accessing the field via an interface.
+func (v *getWorkflowStatusWorkflowStatusWorkflowResult) GetError() string { return v.Error }
 
 // listCustomDomainsDomainsAllDomains includes the requested fields of the GraphQL type AllDomains.
 type listCustomDomainsDomainsAllDomains struct {
@@ -4390,6 +4603,39 @@ mutation deleteVolume ($id: String!) {
 	return &data, err
 }
 
+func deployTemplate(
+	ctx context.Context,
+	client graphql.Client,
+	input TemplateDeployV2Input,
+) (*deployTemplateResponse, error) {
+	req := &graphql.Request{
+		OpName: "deployTemplate",
+		Query: `
+mutation deployTemplate ($input: TemplateDeployV2Input!) {
+	templateDeployV2(input: $input) {
+		projectId
+		workflowId
+	}
+}
+`,
+		Variables: &__deployTemplateInput{
+			Input: input,
+		},
+	}
+	var err error
+
+	var data deployTemplateResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
 func disconnectService(
 	ctx context.Context,
 	client graphql.Client,
@@ -4601,6 +4847,46 @@ fragment Project on Project {
 	return &data, err
 }
 
+func getProjectServices(
+	ctx context.Context,
+	client graphql.Client,
+	projectId string,
+) (*getProjectServicesResponse, error) {
+	req := &graphql.Request{
+		OpName: "getProjectServices",
+		Query: `
+query getProjectServices ($projectId: String!) {
+	project(id: $projectId) {
+		services {
+			edges {
+				node {
+					id
+					name
+					templateServiceId
+				}
+			}
+		}
+	}
+}
+`,
+		Variables: &__getProjectServicesInput{
+			ProjectId: projectId,
+		},
+	}
+	var err error
+
+	var data getProjectServicesResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
 func getService(
 	ctx context.Context,
 	client graphql.Client,
@@ -4794,6 +5080,40 @@ fragment TCPProxy on TCPProxy {
 	return &data, err
 }
 
+func getTemplate(
+	ctx context.Context,
+	client graphql.Client,
+	code string,
+) (*getTemplateResponse, error) {
+	req := &graphql.Request{
+		OpName: "getTemplate",
+		Query: `
+query getTemplate ($code: String!) {
+	template(code: $code) {
+		id
+		name
+		serializedConfig
+	}
+}
+`,
+		Variables: &__getTemplateInput{
+			Code: code,
+		},
+	}
+	var err error
+
+	var data getTemplateResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
 func getVariables(
 	ctx context.Context,
 	client graphql.Client,
@@ -4870,6 +5190,39 @@ fragment Volume on Volume {
 	var err error
 
 	var data getVolumeInstancesResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+func getWorkflowStatus(
+	ctx context.Context,
+	client graphql.Client,
+	workflowId string,
+) (*getWorkflowStatusResponse, error) {
+	req := &graphql.Request{
+		OpName: "getWorkflowStatus",
+		Query: `
+query getWorkflowStatus ($workflowId: String!) {
+	workflowStatus(workflowId: $workflowId) {
+		status
+		error
+	}
+}
+`,
+		Variables: &__getWorkflowStatusInput{
+			WorkflowId: workflowId,
+		},
+	}
+	var err error
+
+	var data getWorkflowStatusResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
