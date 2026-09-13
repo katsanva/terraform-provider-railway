@@ -41,6 +41,8 @@ resource "railway_service" "example" {
 - `source_image_registry_username` (String) Private Docker registry credentials.
 - `source_repo` (String) Source repository of the service. Conflicts with `source_image`.
 - `source_repo_branch` (String) Source repository branch to be used with `source_repo`. Must be specified if `source_repo` is specified.
+- `feature_flags` (Set of String) Service feature flags to enable (`ActiveServiceFeatureFlag` values, e.g. `SKIPPED_BUILDS`). Managed as a whole: flags not listed are removed. Unset leaves flags unmanaged.
+- `watch_patterns` (List of String) Paths that trigger a new deployment on push (gitignore-style, relative to the repo root). Unset keeps Railway's default of every change.
 - `volume` (Attributes) Volume connected to the service. (see [below for nested schema](#nestedatt--volume))
 
 ### Read-Only

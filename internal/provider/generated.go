@@ -136,6 +136,9 @@ type CustomDomainStatusDnsRecordsDNSRecords struct {
 	Hostlabel     string `json:"hostlabel"`
 	RequiredValue string `json:"requiredValue"`
 	Zone          string `json:"zone"`
+	Fqdn          string `json:"fqdn"`
+	RecordType    string `json:"recordType"`
+	Purpose       string `json:"purpose"`
 }
 
 // GetHostlabel returns CustomDomainStatusDnsRecordsDNSRecords.Hostlabel, and is useful for accessing the field via an interface.
@@ -557,7 +560,7 @@ type ServiceInstanceUpdateInput struct {
 	NumReplicas             *int                      `json:"numReplicas,omitempty"`
 	OverlapSeconds          *int                      `json:"overlapSeconds,omitempty"`
 	PreDeployCommand        *[]string                 `json:"preDeployCommand,omitempty"`
-	PreDeployTimeoutSeconds int                       `json:"preDeployTimeoutSeconds"`
+	PreDeployTimeoutSeconds *int                      `json:"preDeployTimeoutSeconds,omitempty"`
 	RailwayConfigFile       *string                   `json:"railwayConfigFile,omitempty"`
 	Region                  *string                   `json:"region,omitempty"`
 	RegistryCredentials     *RegistryCredentialsInput `json:"registryCredentials,omitempty"`
@@ -612,7 +615,7 @@ func (v *ServiceInstanceUpdateInput) GetOverlapSeconds() *int { return v.Overlap
 func (v *ServiceInstanceUpdateInput) GetPreDeployCommand() *[]string { return v.PreDeployCommand }
 
 // GetPreDeployTimeoutSeconds returns ServiceInstanceUpdateInput.PreDeployTimeoutSeconds, and is useful for accessing the field via an interface.
-func (v *ServiceInstanceUpdateInput) GetPreDeployTimeoutSeconds() int {
+func (v *ServiceInstanceUpdateInput) GetPreDeployTimeoutSeconds() *int {
 	return v.PreDeployTimeoutSeconds
 }
 
@@ -2847,6 +2850,7 @@ type getServiceInstanceServiceInstance struct {
 	RootDirectory     *string                                               `json:"rootDirectory"`
 	RailwayConfigFile *string                                               `json:"railwayConfigFile"`
 	CronSchedule      *string                                               `json:"cronSchedule"`
+	WatchPatterns     []string                                              `json:"watchPatterns"`
 	// The most recent deployment for this service instance
 	LatestDeployment getServiceInstanceServiceInstanceLatestDeployment `json:"latestDeployment"`
 }
@@ -4086,6 +4090,9 @@ fragment CustomDomain on CustomDomain {
 			hostlabel
 			requiredValue
 			zone
+			fqdn
+			recordType
+			purpose
 		}
 		verificationDnsHost
 		verificationToken
@@ -4942,6 +4949,7 @@ query getServiceInstance ($environmentId: String!, $serviceId: String!) {
 		rootDirectory
 		railwayConfigFile
 		cronSchedule
+		watchPatterns
 		latestDeployment {
 			meta
 		}
@@ -5260,6 +5268,9 @@ fragment CustomDomain on CustomDomain {
 			hostlabel
 			requiredValue
 			zone
+			fqdn
+			recordType
+			purpose
 		}
 		verificationDnsHost
 		verificationToken

@@ -54,6 +54,7 @@ query getServiceInstance(
     rootDirectory
     railwayConfigFile
     cronSchedule
+    watchPatterns
     latestDeployment {
       meta
     }

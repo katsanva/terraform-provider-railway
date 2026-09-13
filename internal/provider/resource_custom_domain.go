@@ -41,6 +41,7 @@ type CustomDomainResourceModel struct {
 	DNSRecordValue          types.String `tfsdk:"dns_record_value"`
 	VerificationHostLabel   types.String `tfsdk:"verification_host_label"`
 	VerificationRecordValue types.String `tfsdk:"verification_record_value"`
+	DNSRecords              types.List   `tfsdk:"dns_records"`
 }
 
 func (r *CustomDomainResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -117,6 +118,20 @@ func (r *CustomDomainResource) Schema(ctx context.Context, req resource.SchemaRe
 				MarkdownDescription: "DNS record value for custom domain verification",
 				Computed:            true,
 			},
+			"dns_records": schema.ListNestedAttribute{
+				MarkdownDescription: "Every DNS record Railway asks for (a wildcard domain needs a CNAME for the wildcard and one for `_acme-challenge`; the TXT verification is separate). `record_type` is CNAME/A/..., `purpose` is Railway's DNSRecordPurpose.",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"host_label":     schema.StringAttribute{Computed: true},
+						"fqdn":           schema.StringAttribute{Computed: true},
+						"zone":           schema.StringAttribute{Computed: true},
+						"record_type":    schema.StringAttribute{Computed: true},
+						"purpose":        schema.StringAttribute{Computed: true},
+						"required_value": schema.StringAttribute{Computed: true},
+					},
+				},
+			},
 		},
 	}
 }
@@ -188,6 +203,7 @@ func (r *CustomDomainResource) Create(ctx context.Context, req resource.CreateRe
 	data.HostLabel = types.StringValue(domain.Status.DnsRecords[0].Hostlabel)
 	data.Zone = types.StringValue(domain.Status.DnsRecords[0].Zone)
 	data.DNSRecordValue = types.StringValue(domain.Status.DnsRecords[0].RequiredValue)
+	data.DNSRecords = buildCustomDomainDNSRecords(domain.Status.DnsRecords)
 	data.VerificationHostLabel = types.StringValue(domain.Status.VerificationDnsHost)
 	data.VerificationRecordValue = types.StringValue(domain.Status.VerificationToken)
 
@@ -344,6 +360,7 @@ func readCustomDomain(ctx context.Context, client graphql.Client, environmentId 
 	data.HostLabel = types.StringValue(domain.Status.DnsRecords[0].Hostlabel)
 	data.Zone = types.StringValue(domain.Status.DnsRecords[0].Zone)
 	data.DNSRecordValue = types.StringValue(domain.Status.DnsRecords[0].RequiredValue)
+	data.DNSRecords = buildCustomDomainDNSRecords(domain.Status.DnsRecords)
 	data.VerificationHostLabel = types.StringValue(domain.Status.VerificationDnsHost)
 	data.VerificationRecordValue = types.StringValue(domain.Status.VerificationToken)
 

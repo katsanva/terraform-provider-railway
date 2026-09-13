@@ -231,12 +231,24 @@ func (r *TemplateDeploymentResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
+	// Only services this template defines: a concurrent deployment of another
+	// template into the same project would otherwise be attributed to this one
+	// (and deleted with it).
+	templateServices, _ := config["services"].(map[string]interface{})
 	serviceIds := map[string]attr.Value{}
 
 	for _, edge := range after.Project.Services.Edges {
-		if !existing[edge.Node.Id] {
+		if existing[edge.Node.Id] {
+			continue
+		}
+
+		if _, ok := templateServices[edge.Node.TemplateServiceId]; ok {
 			serviceIds[edge.Node.Name] = types.StringValue(edge.Node.Id)
 		}
+	}
+
+	if workflowErr == nil && len(serviceIds) == 0 {
+		workflowErr = fmt.Errorf("workflow %s completed but created no service from template %q", workflowId, data.Template.ValueString())
 	}
 
 	id := workflowId

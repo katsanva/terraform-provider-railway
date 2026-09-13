@@ -78,6 +78,8 @@ type ServiceResourceModel struct {
 	SourceRepoBranch                   types.String `tfsdk:"source_repo_branch"`
 	RootDirectory                      types.String `tfsdk:"root_directory"`
 	ConfigPath                         types.String `tfsdk:"config_path"`
+	WatchPatterns                      types.List   `tfsdk:"watch_patterns"`
+	FeatureFlags                       types.Set    `tfsdk:"feature_flags"`
 	Volume                             types.Object `tfsdk:"volume"`
 	Regions                            types.List   `tfsdk:"regions"`
 }
@@ -186,6 +188,16 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Validators: []validator.String{
 					stringvalidator.UTF8LengthAtLeast(1),
 				},
+			},
+			"watch_patterns": schema.ListAttribute{
+				MarkdownDescription: "Paths that trigger a new deployment on push (gitignore-style, relative to the repo root). Unset keeps Railway's default of every change.",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			"feature_flags": schema.SetAttribute{
+				MarkdownDescription: "Service feature flags to enable (`ActiveServiceFeatureFlag` values, e.g. `SKIPPED_BUILDS`). Managed as a whole: flags not listed are removed. Unset leaves flags unmanaged.",
+				Optional:            true,
+				ElementType:         types.StringType,
 			},
 			"volume": schema.SingleNestedAttribute{
 				MarkdownDescription: "Volume connected to the service.",
@@ -415,6 +427,11 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 	}
 
+	if err := syncServiceFeatureFlags(ctx, *r.client, data.Id.ValueString(), data.FeatureFlags); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to set service feature flags, got error: %s", err))
+		return
+	}
+
 	err = getAndBuildServiceInstance(ctx, *r.client, data.ProjectId.ValueString(), data.Id.ValueString(), data)
 
 	if err != nil {
@@ -426,6 +443,13 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read volume settings, got error: %s", err))
+		return
+	}
+
+	err = getAndBuildServiceFeatureFlags(ctx, *r.client, data.Id.ValueString(), data)
+
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read service feature flags, got error: %s", err))
 		return
 	}
 
@@ -465,6 +489,13 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read volume settings, got error: %s", err))
+		return
+	}
+
+	err = getAndBuildServiceFeatureFlags(ctx, *r.client, data.Id.ValueString(), data)
+
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read service feature flags, got error: %s", err))
 		return
 	}
 
@@ -523,6 +554,11 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	tflog.Trace(ctx, "updated service settings")
+
+	if err := syncServiceFeatureFlags(ctx, *r.client, data.Id.ValueString(), data.FeatureFlags); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update service feature flags, got error: %s", err))
+		return
+	}
 
 	// Delete volume if it was removed
 	if data.Volume.IsNull() && !state.Volume.IsNull() {
@@ -645,6 +681,13 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	err = getAndBuildServiceFeatureFlags(ctx, *r.client, data.Id.ValueString(), data)
+
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read service feature flags, got error: %s", err))
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -704,6 +747,18 @@ func buildServiceInstanceInput(data *ServiceResourceModel, regionsData *[]Servic
 		instanceInput.RailwayConfigFile = data.ConfigPath.ValueStringPointer()
 	}
 
+	if !data.WatchPatterns.IsNull() && !data.WatchPatterns.IsUnknown() {
+		patterns := make([]string, 0, len(data.WatchPatterns.Elements()))
+
+		for _, element := range data.WatchPatterns.Elements() {
+			if value, ok := element.(types.String); ok {
+				patterns = append(patterns, value.ValueString())
+			}
+		}
+
+		instanceInput.WatchPatterns = &patterns
+	}
+
 	if regionsData != nil {
 		multiRegionConfig := make(map[string]interface{})
 
@@ -757,6 +812,20 @@ func getAndBuildServiceInstance(ctx context.Context, client graphql.Client, proj
 
 	if response.ServiceInstance.RailwayConfigFile != nil && len(*response.ServiceInstance.RailwayConfigFile) != 0 {
 		data.ConfigPath = types.StringValue(*response.ServiceInstance.RailwayConfigFile)
+	}
+
+	// Empty means "Railway default (everything)", which the config expresses as
+	// unset; only a real list is surfaced so an unset attribute never drifts.
+	if len(response.ServiceInstance.WatchPatterns) == 0 {
+		data.WatchPatterns = types.ListNull(types.StringType)
+	} else {
+		elements := make([]attr.Value, 0, len(response.ServiceInstance.WatchPatterns))
+
+		for _, pattern := range response.ServiceInstance.WatchPatterns {
+			elements = append(elements, types.StringValue(pattern))
+		}
+
+		data.WatchPatterns = types.ListValueMust(types.StringType, elements)
 	}
 
 	if response.ServiceInstance.Source != nil {

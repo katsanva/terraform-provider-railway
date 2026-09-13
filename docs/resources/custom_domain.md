@@ -36,6 +36,7 @@ resource "railway_custom_domain" "api" {
 ### Read-Only
 
 - `dns_record_value` (String) DNS record value of the custom domain.
+- `dns_records` (Attributes List) Every DNS record Railway asks for: `host_label`, `fqdn`, `zone`, `record_type`, `purpose`, `required_value`. A wildcard domain lists the wildcard CNAME and the `_acme-challenge` CNAME.
 - `host_label` (String) Host label of the custom domain.
 - `id` (String) Identifier of the custom domain.
 - `project_id` (String) Identifier of the project the custom domain belongs to.
